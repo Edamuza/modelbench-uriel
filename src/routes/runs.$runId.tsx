@@ -12,6 +12,9 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { runQuery, pricesQuery, settingsQuery } from "@/lib/queries";
 import { summarize, recommend, fmtUsd, fmtPhp, callCost, type ModelSummary } from "@/lib/metrics";
 import { useRunExecutor } from "@/lib/useRunExecutor";
+import { GRADER_MODEL } from "@/lib/models";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 
 export const Route = createFileRoute("/runs/$runId")({
   head: () => ({
@@ -63,7 +66,7 @@ function RunPage() {
         title={task?.name ?? "Run"}
         sub={
           <>
-            Prompt v{run.prompt_version} · {new Date(run.created_at).toLocaleString()} · pass = score ≥ {threshold}, target pass rate {target}%
+            Prompt v{run.prompt_version} · {new Date(run.created_at).toLocaleString()} · pass = score ≥ {threshold}, target pass rate {target}% · Grader: {P.find((p) => p.model_id === GRADER_MODEL)?.friendly_name ?? GRADER_MODEL}, fixed
             {run.is_seed && " · sample run stored from an earlier session"}
           </>
         }
@@ -162,7 +165,8 @@ function RunPage() {
         <Chart summary={summary} />
       </section>
 
-      <OutputViewer calls={calls} models={run.models} summary={summary} threshold={threshold} prices={P} />
+      <OutputViewer calls={calls} models={run.models} summary={summary} threshold={threshold} prices={P} running={running} />
+      <AllCalls calls={calls} prices={P} threshold={threshold} />
     </>
   );
 }
@@ -202,7 +206,7 @@ function Chart({ summary }: { summary: ModelSummary[] }) {
   );
 }
 
-function OutputViewer({ calls, models, summary, threshold, prices }: { calls: import("@/lib/metrics").Call[]; models: string[]; summary: ModelSummary[]; threshold: number; prices: import("@/lib/metrics").Price[] }) {
+function OutputViewer({ calls, models, summary, threshold, prices, running }: { calls: import("@/lib/metrics").Call[]; models: string[]; summary: ModelSummary[]; threshold: number; prices: import("@/lib/metrics").Price[]; running: boolean }) {
   const positions = [...new Set(calls.map((c) => c.input_position))].sort((a, b) => a - b);
   const [pos, setPos] = useState(positions[0] ?? 1);
   const row = calls.filter((c) => c.input_position === pos);
@@ -246,6 +250,8 @@ function OutputViewer({ calls, models, summary, threshold, prices }: { calls: im
                   <span className={`num rounded px-2 py-0.5 text-xs font-medium ${pass ? "bg-success text-success-foreground" : "bg-destructive text-destructive-foreground"}`}>
                     {c.score}/5 {pass ? "pass" : "fail"}
                   </span>
+                ) : c && (c.grade_status === "failed" || c.grade_status === "skipped" || !running) ? (
+                  <Badge variant="outline">not graded</Badge>
                 ) : (
                   <Badge variant="outline">{c?.status === "pending" ? "running…" : "grading…"}</Badge>
                 )}
@@ -268,5 +274,64 @@ function OutputViewer({ calls, models, summary, threshold, prices }: { calls: im
         })}
       </div>
     </section>
+  );
+}
+
+function AllCalls({ calls, prices, threshold }: { calls: import("@/lib/metrics").Call[]; prices: import("@/lib/metrics").Price[]; threshold: number }) {
+  const [open, setOpen] = useState(true);
+  const name = (m: string) => prices.find((p) => p.model_id === m)?.friendly_name ?? m;
+  const rows = [...calls].sort((a, b) => a.input_position - b.input_position || a.model_id.localeCompare(b.model_id));
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="mt-6 rounded-lg border bg-card shadow-card">
+      <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3 text-left font-semibold">
+        All calls ({calls.length})
+        <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="overflow-x-auto border-t">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Input #</TableHead>
+                <TableHead>Model</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Latency ms</TableHead>
+                <TableHead className="text-right">Input tok</TableHead>
+                <TableHead className="text-right">Output tok</TableHead>
+                <TableHead className="text-right">Cost USD</TableHead>
+                <TableHead className="text-right">Score</TableHead>
+                <TableHead>Pass/fail</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((c) => {
+                const failed = c.status === "failed";
+                return (
+                  <TableRow key={c.id} className={failed ? "bg-destructive/10 hover:bg-destructive/15" : undefined}>
+                    <TableCell className="num">#{c.input_position}</TableCell>
+                    <TableCell className="whitespace-nowrap">{name(c.model_id)}</TableCell>
+                    <TableCell className={failed ? "text-destructive" : undefined}>
+                      <div className="font-medium">{c.status}</div>
+                      {failed && c.error && <div className="max-w-64 text-xs">{c.error}</div>}
+                    </TableCell>
+                    <TableCell className="num text-right">{c.latency_ms ?? "—"}</TableCell>
+                    <TableCell className="num text-right">{c.input_tokens ?? "—"}</TableCell>
+                    <TableCell className="num text-right">{c.output_tokens ?? "—"}{c.tokens_estimated ? " est." : ""}</TableCell>
+                    <TableCell className="num text-right">{fmtUsd(callCost(c, prices.find((p) => p.model_id === c.model_id)))}</TableCell>
+                    <TableCell className="num text-right">{c.score ?? "—"}</TableCell>
+                    <TableCell>
+                      {c.score == null ? <span className="text-muted-foreground">—</span> : c.score >= threshold ? <span className="text-success">pass</span> : <span className="text-destructive">fail</span>}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+        <p className="num border-t px-4 py-2 text-xs text-muted-foreground">
+          cost = input tokens × input $/1M ÷ 1,000,000 + output tokens × output $/1M ÷ 1,000,000
+        </p>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

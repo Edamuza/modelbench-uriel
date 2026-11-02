@@ -29,6 +29,13 @@ function PricesPage() {
   const settings = useQuery(settingsQuery);
   if (prices.isLoading || settings.isLoading) return <LoadingBlock />;
   if (prices.error || settings.error) return <ErrorBlock error={prices.error ?? settings.error} />;
+  return <PricesBody prices={prices.data ?? []} php={settings.data?.php_rate ?? 58} target={settings.data?.pass_rate_target ?? 80} />;
+}
+
+function PricesBody({ prices, php, target }: { prices: Price[]; php: number; target: number }) {
+  const [rate, setRate] = useState(String(php));
+  useEffect(() => setRate(String(php)), [php]);
+  const liveRate = Number(rate) > 0 ? Number(rate) : php;
   return (
     <>
       <PageHeader title="Prices" sub="Example prices — edit to match your provider. Every cost on every page is recomputed from this table." />
@@ -44,17 +51,17 @@ function PricesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {prices.data?.map((p) => <PriceRow key={p.model_id} p={p} />)}
+              {prices.map((p) => <PriceRow key={p.model_id} p={p} rate={liveRate} />)}
             </TableBody>
           </Table>
         </div>
       </div>
-      {settings.data && <SettingsCard php={settings.data.php_rate} target={settings.data.pass_rate_target} />}
+      <SettingsCard rate={rate} setRate={setRate} target={target} />
     </>
   );
 }
 
-function PriceRow({ p }: { p: Price }) {
+function PriceRow({ p, rate }: { p: Price; rate: number }) {
   const [i, setI] = useState(String(p.input_per_m));
   const [o, setO] = useState(String(p.output_per_m));
   const [busy, setBusy] = useState(false);
@@ -81,15 +88,19 @@ function PriceRow({ p }: { p: Price }) {
         <div className="font-medium">{p.friendly_name}</div>
         <div className="num text-xs text-muted-foreground">{p.model_id} · {p.size_tag}</div>
       </TableCell>
-      <TableCell><Input aria-label={`${p.friendly_name} input price`} className="num w-28" type="number" step="0.01" min="0" value={i} onChange={(e) => setI(e.target.value)} /></TableCell>
-      <TableCell><Input aria-label={`${p.friendly_name} output price`} className="num w-28" type="number" step="0.01" min="0" value={o} onChange={(e) => setO(e.target.value)} /></TableCell>
+      <TableCell><Input aria-label={`${p.friendly_name} input price`} className="num w-28" type="number" step="0.01" min="0" value={i} onChange={(e) => setI(e.target.value)} /><PhpHint usd={i} rate={rate} /></TableCell>
+      <TableCell><Input aria-label={`${p.friendly_name} output price`} className="num w-28" type="number" step="0.01" min="0" value={o} onChange={(e) => setO(e.target.value)} /><PhpHint usd={o} rate={rate} /></TableCell>
       <TableCell><Button size="sm" disabled={!dirty || !valid || busy} onClick={submit}>{busy ? "Saving…" : "Save"}</Button></TableCell>
     </TableRow>
   );
 }
 
-function SettingsCard({ php, target }: { php: number; target: number }) {
-  const [rate, setRate] = useState(String(php));
+function PhpHint({ usd, rate }: { usd: string; rate: number }) {
+  const n = Number(usd);
+  return <div className="num mt-1 text-xs text-muted-foreground">{usd !== "" && n >= 0 ? `≈ ₱${(n * rate).toLocaleString(undefined, { maximumFractionDigits: 2 })} / 1M` : "—"}</div>;
+}
+
+function SettingsCard({ rate, setRate, target }: { rate: string; setRate: (v: string) => void; target: number }) {
   const [tgt, setTgt] = useState(String(target));
   const [busy, setBusy] = useState(false);
   const save = useServerFn(updateSettings);

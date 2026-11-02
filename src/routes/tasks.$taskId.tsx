@@ -190,7 +190,8 @@ function InputsTab({ taskId, inputs }: { taskId: string; inputs: { id: string; i
   const [busy, setBusy] = useState(false);
   const save = useServerFn(saveTestInputs);
   const qc = useQueryClient();
-  useEffect(() => setRows(inputs), [inputs]);
+  // Sync only when switching tasks; refetches must not clobber unsaved edits.
+  useEffect(() => setRows(inputs), [taskId]);
   const valid = rows.length >= 5 && rows.length <= 20 && rows.every((r) => r.input.trim());
 
   async function submit() {
@@ -198,6 +199,8 @@ function InputsTab({ taskId, inputs }: { taskId: string; inputs: { id: string; i
     try {
       await save({ data: { taskId, inputs: rows.map((r) => ({ ...r, input: r.input.trim(), reference: r.reference?.trim() || null })) } });
       await qc.invalidateQueries({ queryKey: ["task", taskId] });
+      const fresh = await qc.fetchQuery(taskQuery(taskId));
+      setRows(fresh.inputs);
       qc.invalidateQueries({ queryKey: ["tasks"] });
       toast.success("Test inputs saved");
     } catch (e) {
@@ -245,11 +248,20 @@ function RubricTab({ taskId, rubric, threshold }: { taskId: string; rubric: stri
   const [busy, setBusy] = useState(false);
   const save = useServerFn(saveRubric);
   const qc = useQueryClient();
+  useEffect(() => {
+    setText(rubric);
+    setTh(threshold);
+  }, [taskId]);
   async function submit() {
     setBusy(true);
     try {
       await save({ data: { taskId, rubric: text, threshold: th } });
       await qc.invalidateQueries({ queryKey: ["task", taskId] });
+      const fresh = await qc.fetchQuery(taskQuery(taskId));
+      if (fresh.task) {
+        setText(fresh.task.rubric);
+        setTh(fresh.task.pass_threshold);
+      }
       qc.invalidateQueries({ queryKey: ["tasks"] });
       toast.success("Rubric saved");
     } catch (e) {
