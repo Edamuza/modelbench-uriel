@@ -10,12 +10,30 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as PricesRouteImport } from './routes/prices'
+import { Route as RunsRunIdRouteImport } from './routes/runs.$runId'
 import { Route as RunsNewRouteImport } from './routes/runs.new'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricesRoute = PricesRouteImport.update({
+  id: '/prices',
+  path: '/prices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RunsRunIdRoute = RunsRunIdRouteImport.update({
+  id: '/runs/$runId',
+  path: '/runs/$runId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RunsNewRoute = RunsNewRouteImport.update({
@@ -31,30 +49,51 @@ const TasksTaskIdRoute = TasksTaskIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/prices': typeof PricesRoute
+  '/runs/$runId': typeof RunsRunIdRoute
   '/runs/new': typeof RunsNewRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/prices': typeof PricesRoute
+  '/runs/$runId': typeof RunsRunIdRoute
   '/runs/new': typeof RunsNewRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/prices': typeof PricesRoute
+  '/runs/$runId': typeof RunsRunIdRoute
   '/runs/new': typeof RunsNewRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/runs/new' | '/tasks/$taskId'
+  fullPaths:
+    '/' | '/about' | '/prices' | '/runs/$runId' | '/runs/new' | '/tasks/$taskId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/runs/new' | '/tasks/$taskId'
-  id: '__root__' | '/' | '/runs/new' | '/tasks/$taskId'
+  to:
+    '/' | '/about' | '/prices' | '/runs/$runId' | '/runs/new' | '/tasks/$taskId'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/prices'
+    | '/runs/$runId'
+    | '/runs/new'
+    | '/tasks/$taskId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  PricesRoute: typeof PricesRoute
+  RunsRunIdRoute: typeof RunsRunIdRoute
   RunsNewRoute: typeof RunsNewRoute
   TasksTaskIdRoute: typeof TasksTaskIdRoute
 }
@@ -66,6 +105,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prices': {
+      id: '/prices'
+      path: '/prices'
+      fullPath: '/prices'
+      preLoaderRoute: typeof PricesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/runs/$runId': {
+      id: '/runs/$runId'
+      path: '/runs/$runId'
+      fullPath: '/runs/$runId'
+      preLoaderRoute: typeof RunsRunIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/runs/new': {
@@ -87,6 +147,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  PricesRoute: PricesRoute,
+  RunsRunIdRoute: RunsRunIdRoute,
   RunsNewRoute: RunsNewRoute,
   TasksTaskIdRoute: TasksTaskIdRoute,
 }
