@@ -191,11 +191,14 @@ function RecCard({ icon, title, body, m, highlight, php }: { icon: React.ReactNo
 
 function Chart({ summary }: { summary: ModelSummary[] }) {
   const data = summary.filter((s) => s.ok > 0).map((s) => ({ x: Number(s.per1000.toFixed(5)), y: Number(s.avgScore.toFixed(2)), name: s.name }));
+  const plotWidth = useRef(0); // set by the wrapper ref before labels render; used to flip labels near the right edge
   if (!data.length) return <p className="py-10 text-center text-sm text-muted-foreground">No completed calls to chart yet.</p>;
+  // Track placed label boxes so overlapping labels can be nudged apart vertically.
+  const placed: { x: number; y: number; w: number }[] = [];
   return (
-    <div className="h-72 w-full">
+    <div className="h-72 w-full" ref={(el) => { if (el) plotWidth.current = el.clientWidth; }}>
       <ResponsiveContainer>
-        <ScatterChart margin={{ top: 28, right: 40, bottom: 30, left: 10 }}>
+        <ScatterChart margin={{ top: 34, right: 44, bottom: 30, left: 24 }}>
           <CartesianGrid stroke="var(--border)" />
           <XAxis type="number" dataKey="x" name="Cost / 1,000 runs" tickFormatter={(v) => `$${v}`} stroke="var(--muted-foreground)" fontSize={11} label={{ value: "Cost per 1,000 runs (USD)", position: "insideBottom", offset: -15, fontSize: 11, fill: "var(--muted-foreground)" }} />
           <YAxis type="number" dataKey="y" name="Avg score" domain={[0, 5.6]} ticks={[1, 2, 3, 4, 5]} allowDecimals={false} stroke="var(--muted-foreground)" fontSize={11} label={{ value: "Avg quality (1–5)", angle: -90, position: "insideLeft", fontSize: 11, fill: "var(--muted-foreground)" }} />
@@ -206,12 +209,30 @@ function Chart({ summary }: { summary: ModelSummary[] }) {
             <LabelList
               dataKey="name"
               content={(p: { x?: number | string | undefined; y?: number | string | undefined; value?: unknown; index?: number | undefined }) => {
-                const x = Number(p.x ?? 0) + Number((p as { width?: number }).width ?? 0) / 2;
-                const y = Number(p.y ?? 0) + Number((p as { height?: number }).height ?? 0) / 2;
-                const above = (p.index ?? 0) % 2 === 0; // alternate above/below so close dots stay readable
+                const cx = Number(p.x ?? 0) + Number((p as { width?: number }).width ?? 0) / 2;
+                const cy = Number(p.y ?? 0) + Number((p as { height?: number }).height ?? 0) / 2;
+                const name = String(p.value ?? "");
+                const w = name.length * 6.2; // approx text width at 11px
+                // Default: label to the right of the dot; flip to the left in the right third of the plot.
+                const flipLeft = cx > plotWidth.current * 0.66;
+                let x = flipLeft ? cx - 10 : cx + 10;
+                let anchor: "start" | "end" = flipLeft ? "end" : "start";
+                let y = cy + 4; // vertically centered on the dot
+                // Nudge below the dot when it sits at the top edge.
+                if (cy < 44) y = cy + 16;
+                // Resolve overlaps with already-placed labels by pushing down.
+                const box = () => ({ x: anchor === "start" ? x : x - w, y: y - 11, w });
+                let b = box();
+                for (let guard = 0; guard < 8; guard++) {
+                  const hit = placed.find((o) => b.x < o.x + o.w && b.x + b.w > o.x && b.y < o.y + 13 && b.y + 13 > o.y);
+                  if (!hit) break;
+                  y += 14;
+                  b = box();
+                }
+                placed.push(b);
                 return (
-                  <text x={x} y={above ? y - 12 : y + 20} textAnchor="middle" fontSize={11} fill="var(--foreground)" style={{ whiteSpace: "nowrap" }}>
-                    {String(p.value ?? "")}
+                  <text x={x} y={y} textAnchor={anchor} fontSize={11} fill="var(--foreground)" style={{ whiteSpace: "nowrap" }}>
+                    {name}
                   </text>
                 );
               }}
