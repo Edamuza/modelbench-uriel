@@ -2,9 +2,9 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Call, Price } from "./metrics";
 
-function ok<T>(r: { data: T | null; error: { message: string } | null }): T {
+function ok<R extends { data: unknown; error: { message: string } | null }>(r: R): NonNullable<R["data"]> | (R["data"] & null) {
   if (r.error) throw new Error(r.error.message);
-  return r.data as T;
+  return r.data as NonNullable<R["data"]>;
 }
 
 export const pricesQuery = queryOptions({
