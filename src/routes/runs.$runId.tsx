@@ -204,7 +204,7 @@ function Chart({ summary }: { summary: ModelSummary[] }) {
             {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
             <LabelList
               dataKey="name"
-              content={(p: { x?: number | string; y?: number | string; value?: unknown; index?: number }) => {
+              content={(p: { x?: number | string | undefined; y?: number | string | undefined; value?: unknown; index?: number | undefined }) => {
                 const x = Number(p.x ?? 0) + Number((p as { width?: number }).width ?? 0) / 2;
                 const y = Number(p.y ?? 0) + Number((p as { height?: number }).height ?? 0) / 2;
                 const above = (p.index ?? 0) % 2 === 0; // alternate above/below so close dots stay readable
