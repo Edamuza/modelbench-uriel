@@ -205,8 +205,8 @@ function Chart({ summary }: { summary: ModelSummary[] }) {
             <LabelList
               dataKey="name"
               content={(p: { x?: number | string; y?: number | string; value?: unknown; index?: number }) => {
-                const x = Number(p.x ?? 0) + 8; // dot centre (Scatter x/y is top-left of the symbol)
-                const y = Number(p.y ?? 0) + 8;
+                const x = Number(p.x ?? 0) + Number((p as { width?: number }).width ?? 0) / 2;
+                const y = Number(p.y ?? 0) + Number((p as { height?: number }).height ?? 0) / 2;
                 const above = (p.index ?? 0) % 2 === 0; // alternate above/below so close dots stay readable
                 return (
                   <text x={x} y={above ? y - 12 : y + 20} textAnchor="middle" fontSize={11} fill="var(--foreground)" style={{ whiteSpace: "nowrap" }}>
