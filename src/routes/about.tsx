@@ -51,16 +51,15 @@ function About() {
       </Section>
       <Section n="03" title="Architecture">
         <pre className="num overflow-x-auto rounded-md bg-ink p-4 text-xs text-ink-foreground">{`Browser (React, TanStack Start)
-   │  reads demo data directly (read-only RLS)
-   │  writes + AI via server functions
+   │  every read, write and AI call via server functions
    ▼
 Server functions  ──►  Lovable AI Gateway  (models under test + grader)
    │
    ▼
 Lovable Cloud database`}</pre>
-        <p><strong className="text-foreground">Tables:</strong> tasks, prompt_versions, test_inputs, runs, run_calls, prices, settings.</p>
+        <p><strong className="text-foreground">Tables:</strong> tasks, prompt_versions, test_inputs, runs, run_calls, prices, settings — Row Level Security on, no direct browser access.</p>
         <p>
-          <strong className="text-foreground">Server functions:</strong> createTask, savePromptVersion, saveTestInputs,
+          <strong className="text-foreground">Server functions:</strong> read functions (getTasks, getTask, getRun, getPrices, getSettings), createTask, savePromptVersion, saveTestInputs,
           saveRubric, createRun, executeCall (one model call), gradeCall (one grade), setRunStatus, updatePrice,
           updateSettings, resetDemo. The browser orchestrates a run with a concurrency limit of 4, so each request stays
           short and a reload resumes where it left off. Costs are never stored — they are derived from token counts × the
