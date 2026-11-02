@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader, LoadingBlock, ErrorBlock } from "@/components/AppShell";
+import { StatusBadge } from "@/components/StatusBadge";
 import { taskQuery, pricesQuery } from "@/lib/queries";
 import { savePromptVersion, saveRubric, saveTestInputs } from "@/lib/bench.functions";
 
@@ -298,10 +299,4 @@ function RunsTab({ runs, taskId }: { runs: { id: string; created_at: string; sta
       ))}
     </div>
   );
-}
-
-export function StatusBadge({ status }: { status: string }) {
-  const cls =
-    status === "completed" ? "bg-success text-success-foreground" : status === "failed" ? "bg-destructive text-destructive-foreground" : "bg-warning text-ink";
-  return <span className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>{status}</span>;
 }
