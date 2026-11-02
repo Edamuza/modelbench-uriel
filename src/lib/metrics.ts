@@ -39,7 +39,7 @@ export function percentile(values: number[], pct: number): number {
   if (!values.length) return 0;
   const s = [...values].sort((a, b) => a - b);
   const rank = Math.ceil((pct / 100) * s.length) - 1;
-  return s[Math.max(0, Math.min(s.length - 1, rank))];
+  return s[Math.max(0, Math.min(s.length - 1, rank))] ?? 0;
 }
 
 export type ModelSummary = {

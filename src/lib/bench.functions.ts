@@ -8,9 +8,9 @@ async function admin() {
   return supabaseAdmin;
 }
 
-function check<T>(r: { data: T | null; error: { message: string } | null }): T {
+function check<T>(r: { data: T | null; error: { message: string } | null }): NonNullable<T> {
   if (r.error) throw new Error(r.error.message);
-  return r.data as T;
+  return r.data as NonNullable<T>;
 }
 
 export const createTask = createServerFn({ method: "POST" })

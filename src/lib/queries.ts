@@ -15,7 +15,9 @@ export const pricesQuery = queryOptions({
 export const settingsQuery = queryOptions({
   queryKey: ["settings"],
   queryFn: async () => {
-    const r = ok(await supabase.from("settings").select("*").eq("id", 1).maybeSingle());
+    const res = await supabase.from("settings").select("*").eq("id", 1).maybeSingle();
+    if (res.error) throw new Error(res.error.message);
+    const r = res.data;
     return { php_rate: Number(r?.php_rate ?? 58), pass_rate_target: Number(r?.pass_rate_target ?? 80) };
   },
 });
