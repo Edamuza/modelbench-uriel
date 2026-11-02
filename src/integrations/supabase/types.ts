@@ -14,13 +14,286 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      prices: {
+        Row: {
+          friendly_name: string
+          input_per_m: number
+          model_id: string
+          output_per_m: number
+          size_tag: string
+          sort: number
+        }
+        Insert: {
+          friendly_name: string
+          input_per_m?: number
+          model_id: string
+          output_per_m?: number
+          size_tag?: string
+          sort?: number
+        }
+        Update: {
+          friendly_name?: string
+          input_per_m?: number
+          model_id?: string
+          output_per_m?: number
+          size_tag?: string
+          sort?: number
+        }
+        Relationships: []
+      }
+      prompt_versions: {
+        Row: {
+          change_note: string
+          created_at: string
+          id: string
+          system_prompt: string
+          task_id: string
+          user_template: string
+          version: number
+        }
+        Insert: {
+          change_note?: string
+          created_at?: string
+          id?: string
+          system_prompt?: string
+          task_id: string
+          user_template?: string
+          version: number
+        }
+        Update: {
+          change_note?: string
+          created_at?: string
+          id?: string
+          system_prompt?: string
+          task_id?: string
+          user_template?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prompt_versions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      run_calls: {
+        Row: {
+          created_at: string
+          error: string | null
+          grade_status: string
+          id: string
+          input_position: number
+          input_text: string
+          input_tokens: number | null
+          latency_ms: number | null
+          model_id: string
+          output: string | null
+          output_tokens: number | null
+          reason: string | null
+          reference: string | null
+          run_id: string
+          score: number | null
+          status: string
+          test_input_id: string | null
+          tokens_estimated: boolean
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          grade_status?: string
+          id?: string
+          input_position?: number
+          input_text: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          model_id: string
+          output?: string | null
+          output_tokens?: number | null
+          reason?: string | null
+          reference?: string | null
+          run_id: string
+          score?: number | null
+          status?: string
+          test_input_id?: string | null
+          tokens_estimated?: boolean
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          grade_status?: string
+          id?: string
+          input_position?: number
+          input_text?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          model_id?: string
+          output?: string | null
+          output_tokens?: number | null
+          reason?: string | null
+          reference?: string | null
+          run_id?: string
+          score?: number | null
+          status?: string
+          test_input_id?: string | null
+          tokens_estimated?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "run_calls_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "run_calls_test_input_id_fkey"
+            columns: ["test_input_id"]
+            isOneToOne: false
+            referencedRelation: "test_inputs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          is_seed: boolean
+          models: string[]
+          prompt_version: number
+          prompt_version_id: string | null
+          status: string
+          task_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_seed?: boolean
+          models: string[]
+          prompt_version?: number
+          prompt_version_id?: string | null
+          status?: string
+          task_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_seed?: boolean
+          models?: string[]
+          prompt_version?: number
+          prompt_version_id?: string | null
+          status?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "runs_prompt_version_id_fkey"
+            columns: ["prompt_version_id"]
+            isOneToOne: false
+            referencedRelation: "prompt_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "runs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settings: {
+        Row: {
+          id: number
+          pass_rate_target: number
+          php_rate: number
+        }
+        Insert: {
+          id?: number
+          pass_rate_target?: number
+          php_rate?: number
+        }
+        Update: {
+          id?: number
+          pass_rate_target?: number
+          php_rate?: number
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          name: string
+          pass_threshold: number
+          rubric: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          name: string
+          pass_threshold?: number
+          rubric?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          pass_threshold?: number
+          rubric?: string
+        }
+        Relationships: []
+      }
+      test_inputs: {
+        Row: {
+          created_at: string
+          id: string
+          input: string
+          position: number
+          reference: string | null
+          task_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          input: string
+          position?: number
+          reference?: string | null
+          task_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          input?: string
+          position?: number
+          reference?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_inputs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reset_demo: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

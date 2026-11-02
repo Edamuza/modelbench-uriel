@@ -10,33 +10,92 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as PricesRouteImport } from './routes/prices'
+import { Route as RunsRunIdRouteImport } from './routes/runs.$runId'
+import { Route as RunsNewRouteImport } from './routes/runs.new'
+import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricesRoute = PricesRouteImport.update({
+  id: '/prices',
+  path: '/prices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RunsRunIdRoute = RunsRunIdRouteImport.update({
+  id: '/runs/$runId',
+  path: '/runs/$runId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RunsNewRoute = RunsNewRouteImport.update({
+  id: '/runs/new',
+  path: '/runs/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksTaskIdRoute = TasksTaskIdRouteImport.update({
+  id: '/tasks/$taskId',
+  path: '/tasks/$taskId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/prices': typeof PricesRoute
+  '/runs/$runId': typeof RunsRunIdRoute
+  '/runs/new': typeof RunsNewRoute
+  '/tasks/$taskId': typeof TasksTaskIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/prices': typeof PricesRoute
+  '/runs/$runId': typeof RunsRunIdRoute
+  '/runs/new': typeof RunsNewRoute
+  '/tasks/$taskId': typeof TasksTaskIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/prices': typeof PricesRoute
+  '/runs/$runId': typeof RunsRunIdRoute
+  '/runs/new': typeof RunsNewRoute
+  '/tasks/$taskId': typeof TasksTaskIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    '/' | '/about' | '/prices' | '/runs/$runId' | '/runs/new' | '/tasks/$taskId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    '/' | '/about' | '/prices' | '/runs/$runId' | '/runs/new' | '/tasks/$taskId'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/prices'
+    | '/runs/$runId'
+    | '/runs/new'
+    | '/tasks/$taskId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  PricesRoute: typeof PricesRoute
+  RunsRunIdRoute: typeof RunsRunIdRoute
+  RunsNewRoute: typeof RunsNewRoute
+  TasksTaskIdRoute: typeof TasksTaskIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +107,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prices': {
+      id: '/prices'
+      path: '/prices'
+      fullPath: '/prices'
+      preLoaderRoute: typeof PricesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/runs/$runId': {
+      id: '/runs/$runId'
+      path: '/runs/$runId'
+      fullPath: '/runs/$runId'
+      preLoaderRoute: typeof RunsRunIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/runs/new': {
+      id: '/runs/new'
+      path: '/runs/new'
+      fullPath: '/runs/new'
+      preLoaderRoute: typeof RunsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks/$taskId': {
+      id: '/tasks/$taskId'
+      path: '/tasks/$taskId'
+      fullPath: '/tasks/$taskId'
+      preLoaderRoute: typeof TasksTaskIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  PricesRoute: PricesRoute,
+  RunsRunIdRoute: RunsRunIdRoute,
+  RunsNewRoute: RunsNewRoute,
+  TasksTaskIdRoute: TasksTaskIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
