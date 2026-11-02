@@ -106,8 +106,14 @@ function PromptTab({ taskId, pvs }: { taskId: string; pvs: PV[] }) {
   const dirty = system !== (latest?.system_prompt ?? "") || template !== (latest?.user_template ?? "");
 
   async function submit() {
-    if (!template.includes("{{input}}")) return toast.error("User template must include {{input}}");
-    if (!note.trim()) return toast.error("Add a short change note");
+    if (!template.includes("{{input}}")) {
+      toast.error("User template must include {{input}}");
+      return;
+    }
+    if (!note.trim()) {
+      toast.error("Add a short change note");
+      return;
+    }
     setBusy(true);
     try {
       const r = await save({ data: { taskId, system, template, note: note.trim() } });

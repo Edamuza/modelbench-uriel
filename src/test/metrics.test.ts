@@ -20,12 +20,12 @@ describe("recommendation", () => {
   it("picks the cheapest model meeting the 80% pass-rate target", () => {
     const calls = [...Array(5)].flatMap((_, i) => [mk("a", i < 4 ? 4 : 2), mk("b", 5)]);
     const s = summarize(calls, ["a", "b"], prices, 4);
-    expect(s[0].passRate).toBe(80);
+    expect(s[0]!.passRate).toBe(80);
     expect(recommend(s, 80).cheapest?.model_id).toBe("a");
     expect(recommend(s, 81).cheapest?.model_id).toBe("b");
   });
   it("counts failed calls against the pass rate", () => {
     const s = summarize([mk("a", 5), mk("a", null, "failed")], ["a"], prices, 4);
-    expect(s[0].passRate).toBe(50);
+    expect(s[0]!.passRate).toBe(50);
   });
 });
