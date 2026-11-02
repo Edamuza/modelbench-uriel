@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { executeCall, gradeCall, setRunStatus } from "./bench.functions";
+import { executeCall, finalizePending, gradeCall, setRunStatus } from "./bench.functions";
 import type { Call } from "./metrics";
 
 const CONCURRENCY = 4;
@@ -27,6 +27,7 @@ export function useRunExecutor(runId: string, status: string | undefined, calls:
   const exec = useServerFn(executeCall);
   const grade = useServerFn(gradeCall);
   const setStatus = useServerFn(setRunStatus);
+  const finalize = useServerFn(finalizePending);
   const qc = useQueryClient();
   const started = useRef(false);
   const [phase, setPhase] = useState<"idle" | "calling" | "grading" | "done">("idle");
@@ -68,6 +69,7 @@ export function useRunExecutor(runId: string, status: string | undefined, calls:
             return true;
           });
         }
+        await finalize({ data: { runId, mode: "calls" } });
         if (abort) {
           await setStatus({ data: { runId, status: "completed", abortReason: `Not run: ${abort}` } });
           setPhase("done");
@@ -99,6 +101,7 @@ export function useRunExecutor(runId: string, status: string | undefined, calls:
             return true;
           });
         }
+        await finalize({ data: { runId, mode: "grades" } });
         await setStatus({ data: { runId, status: "completed", abortReason: abort ? `Not graded: ${abort}` : undefined } });
         setPhase("done");
         toast.success("Run complete");
