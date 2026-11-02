@@ -119,7 +119,10 @@ function NewTaskButton() {
   const qc = useQueryClient();
   const nav = useNavigate();
   async function submit() {
-    if (!name.trim()) return toast.error("Give the task a name");
+    if (!name.trim()) {
+      toast.error("Give the task a name");
+      return;
+    }
     setBusy(true);
     try {
       const r = await create({ data: { name: name.trim(), description: desc.trim() } });

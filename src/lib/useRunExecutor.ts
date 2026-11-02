@@ -12,7 +12,7 @@ async function pool<T>(items: T[], n: number, fn: (t: T) => Promise<boolean>) {
   let stop = false;
   const worker = async () => {
     while (!stop && i < items.length) {
-      const item = items[i++];
+      const item = items[i++] as T;
       const keep = await fn(item);
       if (!keep) stop = true;
     }
