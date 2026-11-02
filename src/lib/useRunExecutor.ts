@@ -37,7 +37,7 @@ export function useRunExecutor(runId: string, status: string | undefined, calls:
   useEffect(() => {
     if (!calls || !status || status === "completed" || started.current) return;
     started.current = true;
-    const refresh = () => qc.invalidateQueries({ queryKey: ["run", runId] });
+    const refresh = () => qc.invalidateQueries({ queryKey: ["run", runId] }, { cancelRefetch: false });
     let warned429 = false;
 
     (async () => {
