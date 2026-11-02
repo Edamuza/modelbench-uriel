@@ -59,6 +59,10 @@ function RunPage() {
   const finished = calls.filter((c) => c.status !== "pending").length;
   const graded = calls.filter((c) => c.grade_status !== "pending").length;
   const running = run.status !== "completed";
+  // Once grading starts, never flip back to the calls label; counters never go below the executor's local progress.
+  const grading = exec.phase === "grading" || run.status === "grading";
+  const shownGraded = exec.phase === "grading" ? Math.max(graded - (calls.length - exec.total), exec.done) : graded;
+  const gradeTotal = exec.phase === "grading" ? exec.total : calls.length;
 
   return (
     <>
@@ -83,14 +87,14 @@ function RunPage() {
       {running && (
         <div className="mb-6 space-y-3 rounded-lg border bg-card p-5 shadow-card">
           <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">{exec.phase === "grading" || run.status === "grading" ? "Grading outputs" : "Calling models"}</span>
+            <span className="font-medium">{grading ? "Grading outputs" : "Calling models"}</span>
             <span className="num">
-              {exec.phase === "grading" || run.status === "grading"
-                ? `${graded} / ${calls.length} graded`
+              {grading
+                ? `${shownGraded} / ${gradeTotal} graded`
                 : `${finished} / ${calls.length} calls`}
             </span>
           </div>
-          <Progress value={((exec.phase === "grading" ? graded : finished) / Math.max(1, calls.length)) * 100} />
+          <Progress value={grading ? (shownGraded / Math.max(1, gradeTotal)) * 100 : (finished / Math.max(1, calls.length)) * 100} />
           <p className="text-xs text-muted-foreground">Keep this tab open — the run continues from where it left off if you reload.</p>
         </div>
       )}
@@ -190,15 +194,27 @@ function Chart({ summary }: { summary: ModelSummary[] }) {
   return (
     <div className="h-72 w-full">
       <ResponsiveContainer>
-        <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 10 }}>
+        <ScatterChart margin={{ top: 28, right: 40, bottom: 30, left: 10 }}>
           <CartesianGrid stroke="var(--border)" />
           <XAxis type="number" dataKey="x" name="Cost / 1,000 runs" tickFormatter={(v) => `$${v}`} stroke="var(--muted-foreground)" fontSize={11} label={{ value: "Cost per 1,000 runs (USD)", position: "insideBottom", offset: -15, fontSize: 11, fill: "var(--muted-foreground)" }} />
-          <YAxis type="number" dataKey="y" name="Avg score" domain={[0, 5]} stroke="var(--muted-foreground)" fontSize={11} label={{ value: "Avg quality (1–5)", angle: -90, position: "insideLeft", fontSize: 11, fill: "var(--muted-foreground)" }} />
+          <YAxis type="number" dataKey="y" name="Avg score" domain={[0, 5.6]} ticks={[1, 2, 3, 4, 5]} allowDecimals={false} stroke="var(--muted-foreground)" fontSize={11} label={{ value: "Avg quality (1–5)", angle: -90, position: "insideLeft", fontSize: 11, fill: "var(--muted-foreground)" }} />
           <ZAxis range={[160, 160]} />
           <Tooltip cursor={{ strokeDasharray: "3 3" }} formatter={(v: number, n: string) => (n === "Cost / 1,000 runs" ? `$${v}` : v)} />
           <Scatter data={data}>
             {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-            <LabelList dataKey="name" position="top" fontSize={11} fill="var(--foreground)" />
+            <LabelList
+              dataKey="name"
+              content={(p: { x?: number | string; y?: number | string; value?: unknown; index?: number }) => {
+                const x = Number(p.x ?? 0) + 8; // dot centre (Scatter x/y is top-left of the symbol)
+                const y = Number(p.y ?? 0) + 8;
+                const above = (p.index ?? 0) % 2 === 0; // alternate above/below so close dots stay readable
+                return (
+                  <text x={x} y={above ? y - 12 : y + 20} textAnchor="middle" fontSize={11} fill="var(--foreground)" style={{ whiteSpace: "nowrap" }}>
+                    {String(p.value ?? "")}
+                  </text>
+                );
+              }}
+            />
           </Scatter>
         </ScatterChart>
       </ResponsiveContainer>
