@@ -2,9 +2,13 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Call, Price } from "./metrics";
 
-function ok<R extends { data: unknown; error: { message: string } | null }>(r: R): NonNullable<R["data"]> | (R["data"] & null) {
+function ok<R extends { data: unknown; error: { message: string } | null }>(r: R): NonNullable<R["data"]> {
   if (r.error) throw new Error(r.error.message);
   return r.data as NonNullable<R["data"]>;
+}
+function okMaybe<R extends { data: unknown; error: { message: string } | null }>(r: R): R["data"] {
+  if (r.error) throw new Error(r.error.message);
+  return r.data;
 }
 
 export const pricesQuery = queryOptions({
@@ -45,7 +49,7 @@ export const taskQuery = (id: string) =>
         supabase.from("test_inputs").select("*").eq("task_id", id).order("position"),
         supabase.from("runs").select("*").eq("task_id", id).order("created_at", { ascending: false }),
       ]);
-      return { task: ok(task), pvs: ok(pvs), inputs: ok(inputs), runs: ok(runs) };
+      return { task: okMaybe(task), pvs: ok(pvs), inputs: ok(inputs), runs: ok(runs) };
     },
   });
 
@@ -53,7 +57,7 @@ export const runQuery = (id: string) =>
   queryOptions({
     queryKey: ["run", id],
     queryFn: async () => {
-      const run = ok(await supabase.from("runs").select("*, tasks(name, pass_threshold)").eq("id", id).maybeSingle());
+      const run = okMaybe(await supabase.from("runs").select("*, tasks(name, pass_threshold)").eq("id", id).maybeSingle());
       const calls = ok(await supabase.from("run_calls").select("*").eq("run_id", id).order("input_position")) as Call[];
       return { run, calls };
     },

@@ -81,7 +81,7 @@ function NewRunPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>Task</Label>
-              <Select value={taskId} onValueChange={(v) => setTaskId(v)}>
+              <Select value={taskId ?? ""} onValueChange={(v) => setTaskId(v)}>
                 <SelectTrigger><SelectValue placeholder="Choose a task" /></SelectTrigger>
                 <SelectContent>
                   {tasks.data?.tasks.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
@@ -90,7 +90,7 @@ function NewRunPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Prompt version</Label>
-              <Select value={pvId} onValueChange={setPvId} disabled={!task.data}>
+              <Select value={pvId ?? ""} onValueChange={setPvId} disabled={!task.data}>
                 <SelectTrigger><SelectValue placeholder={task.isLoading ? "Loading…" : "Choose version"} /></SelectTrigger>
                 <SelectContent>
                   {task.data?.pvs.map((p) => (
