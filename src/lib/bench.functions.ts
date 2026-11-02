@@ -190,21 +190,51 @@ export const gradeCall = createServerFn({ method: "POST" })
     return { ok: true, code: 0, message: "" };
   });
 
+async function failPending(db: Awaited<ReturnType<typeof admin>>, runId: string, mode: "calls" | "grades", reason?: string) {
+  if (mode === "calls")
+    check(
+      await db
+        .from("run_calls")
+        .update({ status: "failed", error: reason ?? "Call did not complete", grade_status: "skipped", input_tokens: 0, output_tokens: 0 })
+        .eq("run_id", runId)
+        .eq("status", "pending"),
+    );
+  check(
+    await db
+      .from("run_calls")
+      .update({ grade_status: "failed", reason: reason ?? "Grading did not complete" })
+      .eq("run_id", runId)
+      .eq("grade_status", "pending"),
+  );
+}
+
+// Marks leftover pending rows as failed after a phase so nothing stays stuck.
+export const finalizePending = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ runId: z.string().uuid(), mode: z.enum(["calls", "grades"]) }).parse)
+  .handler(async ({ data }) => {
+    const db = await admin();
+    if (data.mode === "calls") {
+      check(
+        await db
+          .from("run_calls")
+          .update({ status: "failed", error: "Call did not complete", grade_status: "skipped", input_tokens: 0, output_tokens: 0 })
+          .eq("run_id", data.runId)
+          .eq("status", "pending"),
+      );
+    } else {
+      await failPending(db, data.runId, "grades");
+    }
+    return { ok: true };
+  });
+
 export const setRunStatus = createServerFn({ method: "POST" })
   .inputValidator(z.object({ runId: z.string().uuid(), status: z.enum(["running", "grading", "completed"]), abortReason: z.string().max(300).optional() }).parse)
   .handler(async ({ data }) => {
     const db = await admin();
-    if (data.abortReason) {
-      check(
-        await db
-          .from("run_calls")
-          .update({ status: "failed", error: data.abortReason, grade_status: "skipped", input_tokens: 0, output_tokens: 0 })
-          .eq("run_id", data.runId)
-          .eq("status", "pending"),
-      );
-      check(
-        await db.from("run_calls").update({ grade_status: "failed", reason: data.abortReason }).eq("run_id", data.runId).eq("grade_status", "pending"),
-      );
+    // A completed run never contains pending rows.
+    if (data.status === "completed" || data.abortReason) {
+      await failPending(db, data.runId, "calls", data.abortReason);
+      await failPending(db, data.runId, "grades", data.abortReason);
     }
     check(
       await db

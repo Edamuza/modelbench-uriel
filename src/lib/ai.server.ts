@@ -1,5 +1,11 @@
 // Server-only Lovable AI Gateway helpers. Never import from client code.
+import { GRADER_MODEL } from "./models";
+export { GRADER_MODEL };
+
 const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const TIMEOUT_MS = 60_000;
+const TIMEOUT_MSG = "Timed out after 60 s";
+const isTimeout = (e: unknown) => e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
 
 export type ModelResult =
   | {
@@ -53,8 +59,10 @@ export async function callModel(
         "X-Lovable-AIG-SDK": "fetch",
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (e) {
+    if (isTimeout(e)) return { ok: false, status: 408, message: TIMEOUT_MSG, latencyMs: Date.now() - start };
     return { ok: false, status: 0, message: "Network error reaching the AI gateway.", latencyMs: Date.now() - start };
   }
   if (!res.ok || !res.body) {
@@ -69,6 +77,7 @@ export async function callModel(
   let inTok: number | null = null;
   let outTok: number | null = null;
   let streamErr: string | null = null;
+  try {
   for (;;) {
     const { value, done } = await reader.read();
     if (done) break;
@@ -94,13 +103,17 @@ export async function callModel(
       }
     }
   }
+  } catch (e) {
+    const latencyMs = Date.now() - start;
+    if (isTimeout(e)) return { ok: false, status: 408, message: TIMEOUT_MSG, latencyMs };
+    return { ok: false, status: 0, message: "Connection to the AI gateway was interrupted.", latencyMs };
+  }
   const latencyMs = Date.now() - start;
   if (streamErr && !text) return { ok: false, status: 500, message: streamErr, latencyMs };
   if (!text.trim()) return { ok: false, status: 200, message: "Model returned an empty response (possibly refused).", latencyMs };
   return { ok: true, text, latencyMs, inputTokens: inTok, outputTokens: outTok };
 }
 
-export const GRADER_MODEL = "google/gemini-3-flash-preview";
 
 export async function gradeOutput(args: {
   rubric: string;

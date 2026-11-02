@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PageHeader, LoadingBlock, ErrorBlock } from "@/components/AppShell";
 import { tasksQuery, taskQuery, pricesQuery } from "@/lib/queries";
 import { createRun } from "@/lib/bench.functions";
+import { GRADER_MODEL } from "@/lib/models";
 
 export const Route = createFileRoute("/runs/new")({
   validateSearch: z.object({ taskId: z.string().optional() }),
@@ -126,6 +127,7 @@ function NewRunPage() {
             <div className="flex justify-between"><dt className="opacity-70">Models</dt><dd className="num">{models.length}</dd></div>
             <div className="flex justify-between"><dt className="opacity-70">Model calls</dt><dd className="num">{total}</dd></div>
             <div className="flex justify-between"><dt className="opacity-70">Grader calls</dt><dd className="num">≤ {total}</dd></div>
+            <div className="flex justify-between gap-2"><dt className="opacity-70">Grader</dt><dd className="text-right">{prices.data?.find((p) => p.model_id === GRADER_MODEL)?.friendly_name ?? GRADER_MODEL}, fixed</dd></div>
           </dl>
           <Button className="w-full" variant="secondary" disabled={!canRun || busy} onClick={run}>
             <Play className="size-4" /> {busy ? "Starting…" : "Run"}
